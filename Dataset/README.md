@@ -1,0 +1,1 @@
+This folder contains the data we used for our project. The dataset is mainly used from the paper X2CT-GAN: Reconstructing CT from Biplanar X-Rays with Generative Adversarial Networks.
