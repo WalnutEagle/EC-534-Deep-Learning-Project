@@ -1,0 +1,2 @@
+The pretrained model taken from the paper X2CT-GAN: Reconstructing CT from Biplanar X-Rays with Generative Adversarial Networks. 
+As these pretrained models are near about 500mb in size, they have been directly uploaded to the team_11 folder on SCC in the Projects folder inside of EC523kb folder.
