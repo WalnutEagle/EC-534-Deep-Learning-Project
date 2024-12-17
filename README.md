@@ -23,4 +23,25 @@ Please refer to our report for more information on the project. Each of the fold
 
 **Misc** - Contains all miscellaneous code files that were used during this project.
 
+## How to Run the Project
+
+### Prepare the environment
+We recommend using an interactive environment like Jupyter Notebooks. The configuration of the code in our notebooks explains how to load the data, preprocess it and use it to train the models. It must be ensured that all the necessary packages are installed like so:
+
+```bash
+pip install numpy matplotlib torch torchvision scipy scikit-learn tqdm
+```
+
+### Download the dataset
+The dataset and its corresponding .csv file with the descriptive data of the images can be downloaded from this link: https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university
+Once downloaded, the data and the .csv file must be stored in the same directory as the .ipynb notebooks that you are currently working with. 
+
+### Loading the dataset
+An essential part of our data handling framework, this subclass of `torch.utils.data.Dataset` automates the loading, processing, and pairing of image data from the specified directory. It handles loading the image, preprocessing it, removing data files that have missing counterparts (i.e., if some frontal images are missing their corresponding lateral images and vice-versa) and pairs each image_id with their projection type (frontal/lateral). This data loading is different in each of our architectures but follow essentially the same process. 
+
+### Running the code
+Once the data is loaded, the same workflow or order of steps can be followed for each of the architectures as displayed in the Jupyter Notebooks of each folder (of each architecture).
+
+
+
 
