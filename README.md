@@ -5,6 +5,6 @@ Please refer to our report for more information on the project.
 
 The names of the folders represent the type of Architecture GAN present in that folder.
 
-The folder Miscellaneous contains all the code that was tried or ever during this Project.
+The folder Miscellaneous contains all miscellaneous code that was used during this Project.
 
 
