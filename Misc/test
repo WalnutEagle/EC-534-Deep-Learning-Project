@@ -1,0 +1,291 @@
+import torch
+import matplotlib.pyplot as plt
+from torchvision import transforms
+from PIL import Image
+import numpy as np
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+class DenseBlock(nn.Module):
+    def __init__(self, in_channels, growth_rate, num_layers):
+        super(DenseBlock, self).__init__()
+        self.layers = nn.ModuleList()
+        for i in range(num_layers):
+            self.layers.append(nn.Sequential(
+                nn.Conv2d(in_channels + i * growth_rate, growth_rate, kernel_size=3, padding=1),
+                nn.InstanceNorm2d(growth_rate),
+                nn.ReLU(inplace=True)
+            ))
+
+    def forward(self, x):
+        for layer in self.layers:
+            new_features = layer(x)
+            x = torch.cat([x, new_features], dim=1)
+        return x
+
+# Define the Basic3D Block
+class Basic3D(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(Basic3D, self).__init__()
+        self.block = nn.Sequential(
+            nn.Conv3d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.InstanceNorm3d(out_channels),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        return self.block(x)
+
+# Define 2D to 3D Connection (Connection-C)
+class Connection2Dto3D(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(Connection2Dto3D, self).__init__()
+        self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv3d = nn.Conv3d(out_channels, out_channels, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        x = self.conv2d(x)
+        x = x.unsqueeze(2)
+        x = self.conv3d(x)
+        return x
+
+# Updated Discriminator to be self-adjusting
+class Discriminator(nn.Module):
+    def __init__(self, in_channels, base_channels):
+        super(Discriminator, self).__init__()
+
+        self.layers = nn.ModuleList()
+        self.layers.append(
+            nn.Sequential(
+                nn.Conv3d(in_channels, base_channels, kernel_size=2, stride=2, padding=1),
+                nn.LeakyReLU(0.2, inplace=True)
+            )
+        )
+
+        num_layers = 4
+        for i in range(1, num_layers):
+            self.layers.append(
+                nn.Sequential(
+                    nn.Conv3d(base_channels * (2 ** (i - 1)), base_channels * (2 ** i), kernel_size=2, stride=2, padding=1),
+                    nn.InstanceNorm3d(base_channels * (2 ** i)),
+                    nn.LeakyReLU(0.2, inplace=True)
+                )
+            )
+
+        self.final_layer = nn.Conv3d(base_channels * (2 ** (num_layers - 1)), 1, kernel_size=2, stride=1, padding=0)
+        self.pooling = nn.AdaptiveAvgPool3d(1)
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+
+        x = self.final_layer(x)
+        x = self.pooling(x)
+        return x.view(-1)
+
+# Updated Generator to verify and propagate image size
+class Generator(nn.Module):
+    def __init__(self, in_channels, growth_rate, num_dense_layers, out_channels, image_size):
+        super(Generator, self).__init__()
+
+        self.image_size = image_size
+        self.num_upconv_layers = int(torch.log2(torch.tensor(image_size // 4)).item())
+
+        self.encoder1 = nn.Sequential(
+            nn.Conv2d(in_channels, growth_rate, kernel_size=3, padding=1),
+            DenseBlock(growth_rate, growth_rate, num_dense_layers),
+            nn.Conv2d(growth_rate * (num_dense_layers + 1), growth_rate, kernel_size=3, stride=2, padding=1)
+        )
+
+        self.encoder2 = nn.Sequential(
+            nn.Conv2d(in_channels, growth_rate, kernel_size=3, padding=1),
+            DenseBlock(growth_rate, growth_rate, num_dense_layers),
+            nn.Conv2d(growth_rate * (num_dense_layers + 1), growth_rate, kernel_size=3, stride=2, padding=1)
+        )
+
+        self.connection_a = Connection2Dto3D(growth_rate, growth_rate)
+        self.connection_b = nn.Conv3d(growth_rate * 2, growth_rate, kernel_size=3, padding=1)
+        self.connection_c = nn.Conv3d(growth_rate, growth_rate, kernel_size=3, padding=1)
+
+        self.upconv_layers = nn.ModuleList()
+        for _ in range(self.num_upconv_layers):
+            self.upconv_layers.append(
+                nn.Sequential(
+                    nn.ConvTranspose3d(growth_rate, growth_rate, kernel_size=4, stride=2, padding=1),
+                    nn.InstanceNorm3d(growth_rate),
+                    nn.ReLU(inplace=True)
+                )
+            )
+
+        self.final_layer = nn.Conv3d(growth_rate, out_channels, kernel_size=3, padding=1)
+
+    def forward(self, x1, x2):
+        x1 = self.encoder1(x1)
+        x2 = self.encoder2(x2)
+        x1 = self.connection_a(x1)
+        x2 = self.connection_a(x2)
+        x = torch.cat([x1, x2], dim=1)
+        x = self.connection_b(x)
+        for upconv in self.upconv_layers:
+            x = upconv(x)
+
+        x = self.final_layer(x)
+        return x
+
+def load_model(model, model_path):
+    """
+    Function to load the model's weights from a file.
+    """
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    return model
+
+def visualize_3d_volume(volume):
+    """
+    Visualize a slice from the 3D volume.
+    Here we show the central slice of the generated 3D volume.
+    """
+    # Assuming 'volume' is a 3D tensor
+    volume = volume.squeeze(0)  # Remove batch dimension if it exists
+    mid_slice = volume.shape[1] // 2  # Get the middle slice
+    plt.imshow(volume[mid_slice].cpu().numpy(), cmap='gray')
+    plt.title('Middle Slice of Generated 3D Volume')
+    plt.axis('off')
+    plt.show()
+
+def test_model(generator, test_image_path_1, test_image_path_2, transform=None):
+    """
+    Function to test the generator with a pair of test images (frontal and lateral).
+    """
+    # Load the test images
+    frontal_img = Image.open(test_image_path_1).convert("RGB")
+    lateral_img = Image.open(test_image_path_2).convert("RGB")
+
+    # Apply transformations
+    if transform:
+        frontal_img = transform(frontal_img)
+        lateral_img = transform(lateral_img)
+
+    # Add batch dimension and move to device
+    frontal_img = frontal_img.unsqueeze(0).to(device)
+    lateral_img = lateral_img.unsqueeze(0).to(device)
+
+    # Generate the 3D volume
+    with torch.no_grad():  # We don't need gradients for testing
+        generated_volume = generator(frontal_img, lateral_img)
+        print(generated_volume.shape)
+
+    # Visualize the generated 3D volume (showing a middle slice)
+    visualize_3d_volume(generated_volume)
+
+if __name__ == "__main__":
+    # Paths to the test images
+    test_image_1 = '/home/adwait/Desktop/ecprj/images/images_normalized/1_IM-0001-3001.dcm.png'  # Replace with the actual path
+    test_image_2 = '/home/adwait/Desktop/ecprj/images/images_normalized/1_IM-0001-4001.dcm.png'  # Replace with the actual path
+
+    # Define transformation (should match the training transformations)
+    transform = transforms.Compose([
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+        transforms.ToTensor()
+    ])
+
+    # Load the trained generator
+    best_generator_path = '/home/adwait/Desktop/ecprj/generatorPooling_16_100_epoch_20.pth'
+    generator = Generator(
+        in_channels=IN_CHANNELS,
+        growth_rate=GROWTH_RATE,
+        num_dense_layers=NUM_DENSE_LAYERS,
+        out_channels=OUT_CHANNELS,
+        image_size=IMAGE_SIZE
+    ).to(device)
+
+    generator = load_model(generator, best_generator_path)
+
+    # Test the generator with the test images
+    test_model(generator, test_image_1, test_image_2, transform)
+
+
+def visualize_3d_volume_full(volume):
+    """
+    Visualizes the full 3D volume by stacking slices along the depth dimension.
+    """
+    volume = volume.squeeze(0)  # Remove batch dimension if it exists
+    volume = volume.cpu().numpy()  # Convert the tensor to a numpy array for visualization
+    
+    # Plotting the entire stack of slices as a grid
+    num_slices = volume.shape[0]
+    fig, axes = plt.subplots(1, num_slices, figsize=(20, 10))
+    for i in range(num_slices):
+        axes[i].imshow(volume[i], cmap='gray')
+        axes[i].axis('off')
+        axes[i].set_title(f"Slice {i+1}")
+    
+    plt.tight_layout()
+    plt.show()
+
+def visualize_3d_volume_interactive(volume):
+    """
+    Renders the 3D volume interactively using Plotly or PyVista.
+    """
+    # Convert the volume into a numpy array
+    volume = volume.squeeze(0).cpu().numpy()
+    
+    # Create an interactive 3D plot using Plotly (install it via `pip install plotly`)
+    import plotly.graph_objects as go
+
+    # Define the 3D coordinates (x, y, z)
+    x, y, z = np.indices(volume.shape)
+
+    # Create a mesh for the volume
+    fig = go.Figure(data=go.Volume(
+        x=x.flatten(), y=y.flatten(), z=z.flatten(),
+        value=volume.flatten(), 
+        isomin=volume.min(), isomax=volume.max(),
+        opacity=0.1, surface_count=10  # Adjust these parameters for a better view
+    ))
+
+    # Update layout
+    fig.update_layout(scene=dict(
+        xaxis_title='X Axis',
+        yaxis_title='Y Axis',
+        zaxis_title='Z Axis'
+    ))
+
+    # Show the interactive plot
+    fig.show()
+
+
+
+
+
+
+
+
+
+
+def test_model_with_full_visualization(generator, test_image_path_1, test_image_path_2, transform=None):
+    """
+    Function to test the generator with a pair of test images and visualize the full 3D volume.
+    """
+    # Load the test images
+    frontal_img = Image.open(test_image_path_1).convert("RGB")
+    lateral_img = Image.open(test_image_path_2).convert("RGB")
+
+    # Apply transformations
+    if transform:
+        frontal_img = transform(frontal_img)
+        lateral_img = transform(lateral_img)
+
+    # Add batch dimension and move to device
+    frontal_img = frontal_img.unsqueeze(0).to(device)
+    lateral_img = lateral_img.unsqueeze(0).to(device)
+
+    # Generate the 3D volume
+    with torch.no_grad():  # We don't need gradients for testing
+        generated_volume = generator(frontal_img, lateral_img)
+
+    # Visualize the full 3D volume (all slices stacked)
+    visualize_3d_volume_full(generated_volume)
+    # Optionally: Use the interactive version
+    # visualize_3d_volume_interactive(generated_volume)
