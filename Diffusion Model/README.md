@@ -6,3 +6,11 @@ In *H. Greenspan, A. Madabhushi, P. Mousavi, S. Salcudean, J. Duncan, T. Syeda-M
 Springer Nature Switzerland.
 
 https://github.com/bowang-lab/DPM-MedImgEnhance?tab=readme-ov-file#dpm-medimgenhance
+
+
+
+Medical Image Dataset taken from : 
+**Bui, N.-T., Hoang, D.-H., Tran, M.-T., Doretto, G., Adjeroh, D., Patel, B., Choudhary, A., & Le, N. (2023).**  
+SAM3D: Segment Anything Model in Volumetric Medical Images.  
+*arXiv:2309.03493*.
+https://github.com/UARK-AICV/SAM3D?tab=readme-ov-file
