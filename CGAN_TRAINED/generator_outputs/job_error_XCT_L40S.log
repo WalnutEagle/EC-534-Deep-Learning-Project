@@ -1,2 +1,0 @@
-/usr4/cs585/adk1361/.local/lib/python3.8/site-packages/papermill/iorw.py:149: UserWarning: the file is not specified with any extension : -
-  warnings.warn(f"the file is not specified with any extension : {os.path.basename(path)}")
