@@ -6,8 +6,8 @@ Please refer to our report for more information on the project.
 The names of the folders represent the type of Architecture GAN present in that folder.
 
 
-![PDF Preview](path/to/your-image.png)
-![PDF Preview](path/to/your-image.png)
-![PDF Preview](path/to/your-image.png)
-![PDF Preview](path/to/your-image.png)
-![PDF Preview](path/to/your-image.png)
+![PDF Preview](pdf/EC523-Team11-Report-images-0.jpg)
+![PDF Preview](pdf/EC523-Team11-Report-images-0.jpg)
+![PDF Preview](pdf/EC523-Team11-Report-images-0.jpg)
+![PDF Preview](pdf/EC523-Team11-Report-images-0.jpg)
+![PDF Preview](pdf/EC523-Team11-Report-images-0.jpg)
