@@ -33,8 +33,7 @@ pip install numpy matplotlib torch torchvision scipy scikit-learn tqdm
 ```
 
 ### Download the dataset
-The dataset and its corresponding .csv file with the descriptive data of the images can be downloaded from this link: https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university
-Once downloaded, the data and the .csv file must be stored in the same directory as the .ipynb notebooks that you are currently working with. 
+The dataset and its corresponding .csv file with the descriptive data of the images can be downloaded from this link: https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university. </br> Once downloaded, the data and the .csv file must be stored in the same directory as the .ipynb notebooks that you are currently working with. 
 
 ### Loading the dataset
 An essential part of our data handling framework, this subclass of `torch.utils.data.Dataset` automates the loading, processing, and pairing of image data from the specified directory. It handles loading the image, preprocessing it, removing data files that have missing counterparts (i.e., if some frontal images are missing their corresponding lateral images and vice-versa) and pairs each image_id with their projection type (frontal/lateral). This data loading is different in each of our architectures but follow essentially the same process. 
