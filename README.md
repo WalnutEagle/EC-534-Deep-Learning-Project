@@ -5,6 +5,9 @@ Please refer to our report for more information on the project.
 
 The names of the folders represent the type of Architecture GAN present in that folder.
 
-There is a Additional Material Folder which contains all the tried and failed tries 
-we just included to show our work, as we tried different approaches or methods to 
-obtain the obtain the objective defined in our Project Paper.
+
+![PDF Preview](path/to/your-image.png)
+![PDF Preview](path/to/your-image.png)
+![PDF Preview](path/to/your-image.png)
+![PDF Preview](path/to/your-image.png)
+![PDF Preview](path/to/your-image.png)
