@@ -5,10 +5,10 @@ The goal of this project was to make use of unsupervised/weakly supervised learn
 Please refer to our report for more information on the project. Each of the folders correspond to the different architectures and experiments that were carried out.
 
 ## Team Members
-Adwait Kulkarni
-Avantika Kothandaraman
-Harshvardhan Shukla
-Shivam Goyal
+- Adwait Kulkarni
+- Avantika Kothandaraman
+- Harshvardhan Shukla
+- Shivam Goyal
 
 ## Folders in the repository
 **uX2CTGAN** - Contains the .ipynb file with code demonstrations and experiments for the uX2CTGAN architecture.
