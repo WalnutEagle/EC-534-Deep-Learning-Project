@@ -1,1 +1,0 @@
-The image showing the Loss curve is somehow truncated while viewing please download it to be able to view it with AXES.
