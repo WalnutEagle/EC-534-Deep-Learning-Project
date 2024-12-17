@@ -1,4 +1,4 @@
-# EC-523-Deep-Learning-Project
+# EC523-Deep-Learning-Project
 This is the repo for our project for EC 523 Deep Learning.
 
 Please refer to our report for more information on the project.
